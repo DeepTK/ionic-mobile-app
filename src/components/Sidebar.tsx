@@ -9,6 +9,7 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
+  IonModal,
   IonMenu,
   IonMenuToggle,
   IonNote,
@@ -16,9 +17,10 @@ import {
   IonToggle,
   IonToolbar,
 } from "@ionic/react";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
+import { Camera } from "@capacitor/camera";
 import { LocalNotifications } from "@capacitor/local-notifications";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   albumsOutline,
@@ -47,9 +49,14 @@ type SidebarProps = {
 
 const Sidebar: React.FC<SidebarProps> = ({ isDark, onToggleTheme }) => {
   const location = useLocation();
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const webCameraVideoRef = useRef<HTMLVideoElement | null>(null);
+  const webCameraCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const webCameraStreamRef = useRef<MediaStream | null>(null);
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [isWebCameraOpen, setIsWebCameraOpen] = useState(false);
 
   const isActiveRoute = (route: string) =>
     route === "/users" ? location.pathname === "/users" || location.pathname.startsWith("/users/") : location.pathname === route;
@@ -69,29 +76,210 @@ const Sidebar: React.FC<SidebarProps> = ({ isDark, onToggleTheme }) => {
     }
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (webCameraStreamRef.current) {
+        webCameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        webCameraStreamRef.current = null;
+      }
+    };
+  }, []);
+
   const persistImages = (images: string[]) => {
     setCapturedImages(images);
     localStorage.setItem(CAMERA_STORAGE_KEY, JSON.stringify(images));
   };
 
+  const blobToDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Unable to read image data."));
+      };
+      reader.onerror = () => reject(new Error("Unable to process captured image."));
+      reader.readAsDataURL(blob);
+    });
+
   const capturePhoto = async () => {
     setCameraError(null);
     try {
-      const photo = await Camera.getPhoto({
-        quality: 88,
-        source: CameraSource.Prompt,
-        resultType: CameraResultType.DataUrl,
+      if (!Capacitor.isNativePlatform()) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setCameraError("Camera access is not supported in this browser.");
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        webCameraStreamRef.current = stream;
+        setIsWebCameraOpen(true);
+        return;
+      }
+
+      const cameraPermStatus = await Camera.checkPermissions();
+      const cameraPermission =
+        cameraPermStatus.camera === "granted"
+          ? cameraPermStatus
+          : await Camera.requestPermissions({ permissions: ["camera"] });
+
+      if (cameraPermission.camera !== "granted") {
+        setCameraError("Camera permission is required to take a photo.");
+        return;
+      }
+
+      const photo = await Camera.takePhoto({
+        quality: 100,
       });
-      if (!photo.dataUrl) {
+
+      let imageDataUrl: string | null = null;
+      if (photo.webPath) {
+        const imageResponse = await fetch(photo.webPath);
+        const imageBlob = await imageResponse.blob();
+        imageDataUrl = await blobToDataUrl(imageBlob);
+      } else if (photo.thumbnail) {
+        imageDataUrl = `data:image/jpeg;base64,${photo.thumbnail}`;
+      }
+
+      if (!imageDataUrl) {
         setCameraError("Photo capture was cancelled.");
         return;
       }
-      const updatedImages = [photo.dataUrl, ...capturedImages].slice(0, MAX_SAVED_IMAGES);
+
+      const updatedImages = [imageDataUrl, ...capturedImages].slice(0, MAX_SAVED_IMAGES);
       persistImages(updatedImages);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to open camera.";
       setCameraError(message);
     }
+  };
+
+  const closeWebCamera = () => {
+    if (webCameraStreamRef.current) {
+      webCameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      webCameraStreamRef.current = null;
+    }
+    if (webCameraVideoRef.current) {
+      webCameraVideoRef.current.srcObject = null;
+    }
+    setIsWebCameraOpen(false);
+  };
+
+  const handleWebCameraModalDidPresent = async () => {
+    if (!webCameraVideoRef.current || !webCameraStreamRef.current) {
+      return;
+    }
+    webCameraVideoRef.current.srcObject = webCameraStreamRef.current;
+    try {
+      await webCameraVideoRef.current.play();
+    } catch {
+      setCameraError("Unable to start camera preview.");
+      closeWebCamera();
+    }
+  };
+
+  const captureFromWebCamera = () => {
+    const videoEl = webCameraVideoRef.current;
+    const canvasEl = webCameraCanvasRef.current;
+    if (!videoEl || !canvasEl || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) {
+      setCameraError("Camera preview is not ready yet.");
+      return;
+    }
+
+    canvasEl.width = videoEl.videoWidth;
+    canvasEl.height = videoEl.videoHeight;
+    const context = canvasEl.getContext("2d");
+    if (!context) {
+      setCameraError("Unable to capture image.");
+      return;
+    }
+
+    context.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+    const imageDataUrl = canvasEl.toDataURL("image/jpeg", 0.9);
+    const updatedImages = [imageDataUrl, ...capturedImages].slice(0, MAX_SAVED_IMAGES);
+    persistImages(updatedImages);
+    closeWebCamera();
+  };
+
+  const chooseFromGallery = async () => {
+    setCameraError(null);
+    try {
+      if (!Capacitor.isNativePlatform()) {
+        galleryInputRef.current?.click();
+        return;
+      }
+
+      const photoPermStatus = await Camera.checkPermissions();
+      const photoPermission =
+        photoPermStatus.photos === "granted" || photoPermStatus.photos === "limited"
+          ? photoPermStatus
+          : await Camera.requestPermissions({ permissions: ["photos"] });
+
+      if (photoPermission.photos !== "granted" && photoPermission.photos !== "limited") {
+        setCameraError("Gallery permission is required to choose photos.");
+        return;
+      }
+
+      const galleryResult = await Camera.chooseFromGallery({
+        mediaType: 0,
+        allowMultipleSelection: false,
+        quality: 100,
+      });
+
+      const pickedPhoto = galleryResult.results.find((result) => Boolean(result.webPath || result.thumbnail));
+      if (!pickedPhoto) {
+        setCameraError("No image was selected.");
+        return;
+      }
+
+      let imageDataUrl: string | null = null;
+      if (pickedPhoto.webPath) {
+        const imageResponse = await fetch(pickedPhoto.webPath);
+        const imageBlob = await imageResponse.blob();
+        imageDataUrl = await blobToDataUrl(imageBlob);
+      } else if (pickedPhoto.thumbnail) {
+        imageDataUrl = `data:image/jpeg;base64,${pickedPhoto.thumbnail}`;
+      }
+
+      if (!imageDataUrl) {
+        setCameraError("No image data found for selected photo.");
+        return;
+      }
+
+      const updatedImages = [imageDataUrl, ...capturedImages].slice(0, MAX_SAVED_IMAGES);
+      persistImages(updatedImages);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to open gallery.";
+      setCameraError(message);
+    }
+  };
+
+  const handleWebGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!selectedFile) {
+      return;
+    }
+
+    setCameraError(null);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result !== "string") {
+        setCameraError("Unable to process selected image.");
+        return;
+      }
+      const updatedImages = [reader.result, ...capturedImages].slice(0, MAX_SAVED_IMAGES);
+      persistImages(updatedImages);
+    };
+    reader.onerror = () => {
+      setCameraError("Unable to read selected image.");
+    };
+    reader.readAsDataURL(selectedFile);
   };
 
   const clearSavedPhotos = () => {
@@ -213,6 +401,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isDark, onToggleTheme }) => {
             <IonButton expand="block" className="btn-primary" onClick={() => void capturePhoto()}>
               Take Photo
             </IonButton>
+            <IonButton expand="block" fill="outline" className="btn-secondary" onClick={() => void chooseFromGallery()}>
+              Choose From Gallery
+            </IonButton>
             {capturedImages.length > 0 && (
               <IonButton
                 expand="block"
@@ -272,6 +463,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isDark, onToggleTheme }) => {
             </IonItem>
           )}
         </IonList>
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleWebGalleryChange}
+        />
+        <IonModal isOpen={isWebCameraOpen} onDidPresent={handleWebCameraModalDidPresent} onDidDismiss={closeWebCamera}>
+          <div className="web-camera-modal">
+            <h2>Take Photo</h2>
+            <video ref={webCameraVideoRef} className="web-camera-preview" autoPlay playsInline muted />
+            <canvas ref={webCameraCanvasRef} hidden />
+            <div className="web-camera-actions">
+              <IonButton className="btn-primary" onClick={captureFromWebCamera}>
+                Capture
+              </IonButton>
+              <IonButton fill="clear" className="btn-ghost" onClick={closeWebCamera}>
+                Cancel
+              </IonButton>
+            </div>
+          </div>
+        </IonModal>
       </IonContent>
     </IonMenu>
   );
