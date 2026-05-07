@@ -1,0 +1,77 @@
+:root {
+  /* Font families */
+  --font-family-base: "Inter", "SF Pro Text", "SF Pro Display", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --font-family-display: "Inter", "SF Pro Display", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  /* Elevation */
+  --shadow-1: 0 6px 16px rgba(0, 0, 0, 0.12);
+  --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.18);
+
+  /* Typography (rem for accessibility) */
+  --ion-font-family: var(--font-family-base);
+  --font-title: 1.125rem;
+  --font-subtitle: 0.95rem;
+  --font-body: 0.95rem;
+  --font-caption: 0.85rem;
+
+  /* Button system */
+  --btn-height-md: 44px;
+  --btn-height-lg: 48px;
+  --btn-radius: 12px;
+  --btn-font-weight: 600;
+  --btn-letter-spacing: 0.01em;
+  --btn-shadow-primary: 0 6px 14px rgba(66, 76, 201, 0.22);
+  --btn-shadow-secondary: none;
+  --btn-disabled-opacity: 0.52;
+  --btn-press-opacity: 0.88;
+  --btn-focus-ring: 0 0 0 3px color-mix(in srgb, #4f5bd5 35%, transparent);
+
+  --btn-primary-bg: #4f5bd5;
+  --btn-primary-color: #ffffff;
+  --btn-secondary-bg: color-mix(in srgb, #4f5bd5 12%, transparent);
+  --btn-secondary-color: #3f4bbe;
+  --btn-ghost-color: var(--ion-color-step-650, #6b7280);
+  --btn-inline-color: #4451c7;
+
+  /* Surfaces (use Ionic vars where possible) */
+  --surface-1: var(--ion-background-color);
+  --surface-2: var(--ion-item-background, var(--ion-background-color));
+  --border-subtle: var(--ion-border-color, rgba(127, 127, 127, 0.22));
+
+  /* Media */
+  --media-height-sm: 200px;
+  --media-height-md: 240px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --media-height-sm: 220px;
+    --media-height-md: 280px;
+  }
+}
+
+.ion-palette-dark {
+  --btn-shadow-primary: none;
+  --btn-primary-bg: #7f8cff;
+  --btn-primary-color: #11131a;
+  --btn-secondary-bg: color-mix(in srgb, #7f8cff 22%, transparent);
+  --btn-secondary-color: #c9d0ff;
+  --btn-ghost-color: #b5b9c7;
+  --btn-inline-color: #c9d0ff;
+  --btn-focus-ring: 0 0 0 3px color-mix(in srgb, #a9b1ff 45%, transparent);
+}
+

@@ -8,9 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@capacitor/android':
+        specifier: ^8.3.1
+        version: 8.3.1(@capacitor/core@8.3.1)
       '@capacitor/app':
         specifier: 8.1.0
         version: 8.1.0(@capacitor/core@8.3.1)
+      '@capacitor/camera':
+        specifier: ^8.2.0
+        version: 8.2.0(@capacitor/core@8.3.1)
       '@capacitor/core':
         specifier: 8.3.1
         version: 8.3.1
@@ -20,6 +26,9 @@ importers:
       '@capacitor/keyboard':
         specifier: 8.0.3
         version: 8.0.3(@capacitor/core@8.3.1)
+      '@capacitor/local-notifications':
+        specifier: ^8.0.2
+        version: 8.0.2(@capacitor/core@8.3.1)
       '@capacitor/status-bar':
         specifier: 8.0.2
         version: 8.0.2(@capacitor/core@8.3.1)
@@ -29,12 +38,6 @@ importers:
       '@ionic/react-router':
         specifier: ^8.5.0
         version: 8.8.5(react-dom@19.0.0(react@19.0.0))(react-router-dom@5.3.4(react@19.0.0))(react-router@5.3.4(react@19.0.0))(react@19.0.0)
-      '@types/react-router':
-        specifier: ^5.1.20
-        version: 5.1.20
-      '@types/react-router-dom':
-        specifier: ^5.3.3
-        version: 5.3.3
       ionicons:
         specifier: ^7.4.0
         version: 7.4.0
@@ -54,6 +57,9 @@ importers:
       '@capacitor/cli':
         specifier: 8.3.1
         version: 8.3.1
+      '@eslint/js':
+        specifier: ^9.39.4
+        version: 9.39.4
       '@testing-library/dom':
         specifier: '>=7.21.4'
         version: 10.4.1
@@ -72,6 +78,12 @@ importers:
       '@types/react-dom':
         specifier: 19.0.4
         version: 19.0.4(@types/react@19.0.10)
+      '@types/react-router':
+        specifier: ^5.1.20
+        version: 5.1.20
+      '@types/react-router-dom':
+        specifier: ^5.3.3
+        version: 5.3.3
       '@vitejs/plugin-legacy':
         specifier: ^5.0.0
         version: 5.4.3(terser@5.46.2)(vite@5.4.21(@types/node@25.6.0)(terser@5.46.2))
@@ -633,8 +645,18 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
+  '@capacitor/android@8.3.1':
+    resolution: {integrity: sha512-hjskIG8YcBEh3X4yaTXvE9gcqpdcxunTgFruSKnuPxtMxAUzEK4Oq25x0Z1g3cz+MQPc+lRG09R7Ovc+ydKsNw==}
+    peerDependencies:
+      '@capacitor/core': ^8.3.0
+
   '@capacitor/app@8.1.0':
     resolution: {integrity: sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/camera@8.2.0':
+    resolution: {integrity: sha512-hYfrT6xpL936qoEkIpJzSnb0fQCaTkOux1cXzGBfH8QLOGqr6gSLiWZlZz/fqMPmMKJMNRBqlTQkj5fuMhVZog==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -653,6 +675,11 @@ packages:
 
   '@capacitor/keyboard@8.0.3':
     resolution: {integrity: sha512-27Bv5/2w1Ss2njguBgTS98O0Bb8DRJhAARyzXYib0JlT/n6BrJw/EZ0CokM4C8GFUjFDjJnEKF1Ie01buTMEXQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/local-notifications@8.0.2':
+    resolution: {integrity: sha512-X7KE/I4ZutMTGVHNUyTjIugYcQEcHJRLks+TsPnOriuS+lo0geSTuaRln6zAZlJSSXSoVMSSzHexdSbIjR/8iw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -4186,7 +4213,15 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
+  '@capacitor/android@8.3.1(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
   '@capacitor/app@8.1.0(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capacitor/camera@8.2.0(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
@@ -4221,6 +4256,10 @@ snapshots:
       '@capacitor/core': 8.3.1
 
   '@capacitor/keyboard@8.0.3(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capacitor/local-notifications@8.0.2(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 

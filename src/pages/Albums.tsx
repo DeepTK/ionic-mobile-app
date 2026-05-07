@@ -1,20 +1,17 @@
-import {
-  IonContent,
-  IonPage,
-} from '@ionic/react';
+import { IonContent, IonPage } from '@ionic/react';
 import { useHeaderOptions } from '../layouts/HeaderControlsContext';
-import PostsSection from '../components/PostsSection';
+import AlbumsSection from '../components/AlbumsSection';
 
-const Home: React.FC = () => {
+const Albums: React.FC = () => {
   useHeaderOptions({ showBack: false, backHref: '/post' });
 
   return (
     <IonPage>
       <IonContent>
-        <PostsSection />
+        <AlbumsSection />
       </IonContent>
     </IonPage>
   );
 };
 
-export default Home;
+export default Albums;

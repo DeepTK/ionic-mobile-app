@@ -1,7 +1,8 @@
-import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
+import { useEffect, useState } from 'react';
+import { IonApp, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import Home from './pages/Home';
+import WelcomeModal from './components/WelcomeModal';
+import AppLayout from './layouts/AppLayout';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -27,27 +28,54 @@ import '@ionic/react/css/display.css';
  */
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
-
-/* Theme variables */
-import './theme/variables.css';
+import '@ionic/react/css/palettes/dark.class.css';
+import './app.css';
+import './styles/tokens.css';
+import './styles/components.css';
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
-);
+const App: React.FC = () => {
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('ion-palette-dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('welcome-modal-seen');
+    setShowWelcomeModal(!hasSeenWelcome);
+  }, []);
+
+  const handleWelcomeDone = () => {
+    localStorage.setItem('welcome-modal-seen', 'true');
+    setShowWelcomeModal(false);
+  };
+
+  const handleWelcomeDismiss = () => {
+    setShowWelcomeModal(false);
+  };
+
+  return (
+    <IonApp>
+      <IonReactRouter>
+        <AppLayout isDark={isDark} onToggleTheme={setIsDark} />
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onDone={handleWelcomeDone}
+          onDismiss={handleWelcomeDismiss}
+        />
+      </IonReactRouter>
+    </IonApp>
+  );
+};
 
 export default App;
